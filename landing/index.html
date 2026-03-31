@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMB AI Review Manager — WordPress Plugin</title>
+    <meta name="description" content="Manage your Google Business reviews with AI-powered replies. One-click Google sign-in, auto-detect locations, generate and post professional replies instantly.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #4285F4;
+            --primary-d: #2b6fd4;
+            --green: #34A853;
+            --yellow: #FBBC05;
+            --red: #EA4335;
+            --text: #0f172a;
+            --muted: #64748b;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --radius: 20px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        a { color: var(--primary); text-decoration: none; }
+
+        .container { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+
+        /* ── Nav ───────────────────────────────────────────────── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+
+        nav .container {
+            display: flex; align-items: center; justify-content: space-between; height: 72px;
+        }
+
+        .nav-brand {
+            display: flex; align-items: center; gap: 12px;
+            font-weight: 800; font-size: 19px; color: var(--text);
+        }
+
+        .nav-brand-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(66,133,244,0.3);
+        }
+
+        .nav-brand-icon svg { width: 20px; height: 20px; }
+
+        .nav-links { display: flex; align-items: center; gap: 36px; list-style: none; }
+
+        .nav-links a {
+            color: var(--muted); font-size: 14px; font-weight: 500;
+            transition: color .2s; position: relative;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+
+        .nav-cta {
+            background: var(--text) !important; color: #fff !important;
+            padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: 14px;
+            transition: all .2s; box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .nav-cta:hover { background: #1e293b !important; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
+
+        .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+        .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--text); margin: 5px 0; border-radius: 2px; transition: .3s; }
+
+        /* ── Hero ──────────────────────────────────────────────── */
+        .hero {
+            padding: 160px 24px 100px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated mesh background */
+        .hero::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(66,133,244,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 20%, rgba(99,102,241,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 50% at 20% 30%, rgba(52,168,83,0.06) 0%, transparent 50%);
+            z-index: 0;
+        }
+
+        /* Floating grid pattern */
+        .hero::after {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                linear-gradient(rgba(66,133,244,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(66,133,244,0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 70% 50% at 50% 30%, black 20%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 30%, black 20%, transparent 70%);
+            z-index: 0;
+        }
+
+        .hero > * { position: relative; z-index: 1; }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.9); border: 1px solid var(--border);
+            border-radius: 100px; padding: 8px 20px;
+            font-size: 13px; font-weight: 600; color: var(--primary);
+            margin-bottom: 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero-badge .dot {
+            width: 8px; height: 8px; background: var(--green);
+            border-radius: 50%; animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(52,168,83,0.4); }
+            50% { box-shadow: 0 0 0 6px rgba(52,168,83,0); }
+        }
+
+        .hero h1 {
+            font-size: clamp(40px, 5.5vw, 64px);
+            font-weight: 900; line-height: 1.1;
+            max-width: 800px; margin: 0 auto 24px;
+            letter-spacing: -0.035em;
+        }
+
+        .gradient {
+            background: linear-gradient(135deg, #4285F4 0%, #6366f1 40%, #34A853 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 19px; color: var(--muted);
+            max-width: 580px; margin: 0 auto 40px; line-height: 1.7; font-weight: 400;
+        }
+
+        .hero-buttons { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+
+        .btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 16px 32px; border-radius: 14px;
+            font-size: 15px; font-weight: 600;
+            transition: all .25s cubic-bezier(.4,0,.2,1);
+            cursor: pointer; border: none; text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4285F4, #3367d6);
+            color: #fff; box-shadow: 0 4px 24px rgba(66,133,244,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 40px rgba(66,133,244,0.4); }
+
+        .btn-outline {
+            background: rgba(255,255,255,0.8); color: var(--text);
+            border: 1.5px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            backdrop-filter: blur(8px);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+        /* ── Stats bar ─────────────────────────────────────────── */
+        .stats-bar {
+            display: flex; justify-content: center; gap: 48px;
+            margin-top: 56px; flex-wrap: wrap;
+        }
+
+        .stat { text-align: center; }
+
+        .stat-num {
+            font-size: 32px; font-weight: 800; color: var(--text);
+            letter-spacing: -0.02em;
+        }
+
+        .stat-num .accent { color: var(--primary); }
+
+        .stat-label { font-size: 13px; color: var(--muted); font-weight: 500; margin-top: 4px; }
+
+        /* ── Hero preview ──────────────────────────────────────── */
+        .hero-preview-wrap {
+            max-width: 960px; margin: 72px auto 0;
+            perspective: 1200px;
+        }
+
+        .hero-preview {
+            border-radius: 20px;
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.06),
+                0 24px 80px -12px rgba(0,0,0,0.16),
+                0 0 120px -40px rgba(66,133,244,0.15);
+            overflow: hidden; background: var(--surface);
+            transform: rotateX(2deg);
+            transition: transform .4s ease;
+        }
+
+        .hero-preview:hover { transform: rotateX(0deg); }
+
+        .preview-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 14px 20px; background: #f9fafb; border-bottom: 1px solid var(--border);
+        }
+
+        .preview-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .preview-dot--r { background: #ff5f57; }
+        .preview-dot--y { background: #ffbd2e; }
+        .preview-dot--g { background: #28c840; }
+
+        .preview-url {
+            flex: 1; text-align: center;
+            font-size: 12px; color: var(--muted); font-weight: 500;
+        }
+
+        .preview-body { padding: 28px; background: #f1f5f9; }
+
+        .preview-header {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            border-radius: 14px; padding: 22px 28px; color: #fff; margin-bottom: 18px;
+            display: flex; align-items: center; gap: 14px;
+        }
+
+        .preview-header-icon {
+            width: 44px; height: 44px;
+            background: rgba(255,255,255,0.2); border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+        }
+
+        .preview-header h3 { font-size: 16px; margin-bottom: 2px; font-weight: 700; }
+        .preview-header p { font-size: 12px; opacity: 0.75; margin: 0; }
+
+        .preview-card {
+            background: #fff; border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 14px; padding: 20px 22px; margin-bottom: 14px;
+            transition: all .2s;
+        }
+
+        .preview-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+
+        .preview-card-head {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+        }
+
+        .preview-reviewer { display: flex; align-items: center; gap: 12px; }
+
+        .preview-avatar {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            border-radius: 50%; color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 15px;
+        }
+
+        .preview-name { font-weight: 700; font-size: 14px; }
+        .preview-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
+        .preview-stars { color: var(--yellow); font-size: 17px; letter-spacing: 2px; }
+
+        .preview-text { font-size: 13.5px; color: #475569; line-height: 1.65; margin-bottom: 14px; }
+
+        .preview-ai-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--green), #1e7e34);
+            color: #fff; border-radius: 8px; font-size: 12px; font-weight: 600; border: none;
+            box-shadow: 0 2px 8px rgba(52,168,83,0.3);
+        }
+
+        .preview-reply {
+            background: linear-gradient(135deg, #f0f7ff, #f8faff);
+            border: 1px solid #dbeafe; border-radius: 12px;
+            padding: 16px 18px; margin-top: 12px;
+            font-size: 13px; color: #1e3a5f; line-height: 1.65;
+        }
+
+        .preview-reply-label {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--primary); margin-bottom: 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .preview-reply-label::before {
+            content: ''; width: 16px; height: 2px; background: var(--primary); border-radius: 2px;
+        }
+
+        .preview-reply-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+        .preview-post-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 7px 14px; background: var(--primary); color: #fff;
+            border-radius: 7px; font-size: 11px; font-weight: 600; border: none;
+            box-shadow: 0 2px 8px rgba(66,133,244,0.25);
+        }
+
+        .preview-edit-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 7px 14px; background: #f1f5f9; color: var(--muted);
+            border-radius: 7px; font-size: 11px; font-weight: 600; border: 1px solid var(--border);
+        }
+
+        /* ── Trusted by ────────────────────────────────────────── */
+        .trusted {
+            padding: 60px 24px 0; text-align: center;
+        }
+
+        .trusted p {
+            font-size: 13px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 24px;
+        }
+
+        .trusted-logos {
+            display: flex; justify-content: center; align-items: center;
+            gap: 48px; flex-wrap: wrap; opacity: 0.4;
+        }
+
+        .trusted-logos span {
+            font-size: 18px; font-weight: 800; color: #94a3b8; letter-spacing: -0.02em;
+        }
+
+        /* ── Features ──────────────────────────────────────────── */
+        .features { padding: 120px 24px; }
+
+        .section-label {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--primary); margin-bottom: 16px;
+            background: #eff6ff; padding: 6px 16px; border-radius: 100px;
+        }
+
+        .section-title {
+            font-size: clamp(30px, 4vw, 44px);
+            font-weight: 800; margin-bottom: 16px; letter-spacing: -0.025em;
+            line-height: 1.15;
+        }
+
+        .section-desc { font-size: 17px; color: var(--muted); max-width: 560px; line-height: 1.7; }
+
+        .features-header { text-align: center; margin-bottom: 72px; }
+        .features-header .section-desc { margin: 0 auto; }
+
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+        .feature-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 36px 30px;
+            transition: all .3s cubic-bezier(.4,0,.2,1);
+            position: relative; overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--primary), #6366f1);
+            opacity: 0; transition: opacity .3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 60px -12px rgba(0,0,0,0.1);
+            border-color: transparent;
+        }
+
+        .feature-card:hover::before { opacity: 1; }
+
+        .feature-icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; margin-bottom: 20px;
+        }
+
+        .feature-icon--blue   { background: linear-gradient(135deg, #e8f0fe, #dbeafe); }
+        .feature-icon--green  { background: linear-gradient(135deg, #e6f4ea, #dcfce7); }
+        .feature-icon--yellow { background: linear-gradient(135deg, #fef7e0, #fef3c7); }
+        .feature-icon--red    { background: linear-gradient(135deg, #fce8e6, #fee2e2); }
+        .feature-icon--purple { background: linear-gradient(135deg, #f3e8ff, #ede9fe); }
+        .feature-icon--teal   { background: linear-gradient(135deg, #e0f7fa, #ccfbf1); }
+
+        .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+        .feature-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+        /* ── How it works ──────────────────────────────────────── */
+        .how-it-works {
+            padding: 120px 24px;
+            background: linear-gradient(180deg, #fff 0%, #f0f4ff 50%, #fff 100%);
+            position: relative;
+        }
+
+        .how-header { text-align: center; margin-bottom: 72px; }
+        .how-header .section-desc { margin: 0 auto; }
+
+        .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+
+        .step {
+            text-align: center; position: relative;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 36px 24px;
+            transition: all .3s;
+        }
+
+        .step:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.06); }
+
+        .step-num {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            color: #fff; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: 800; margin: 0 auto 20px;
+            box-shadow: 0 4px 20px rgba(66,133,244,0.3);
+        }
+
+        .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+        .step p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+        /* ── Testimonial / Social proof ────────────────────────── */
+        .social-proof {
+            padding: 100px 24px;
+        }
+
+        .social-proof-header { text-align: center; margin-bottom: 56px; }
+        .social-proof-header .section-desc { margin: 0 auto; }
+
+        .proof-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+        .proof-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 28px;
+        }
+
+        .proof-stars { color: var(--yellow); font-size: 16px; letter-spacing: 2px; margin-bottom: 14px; }
+
+        .proof-text {
+            font-size: 15px; line-height: 1.7; color: var(--text);
+            margin-bottom: 18px; font-style: italic;
+        }
+
+        .proof-author { display: flex; align-items: center; gap: 12px; }
+
+        .proof-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 15px; color: #fff;
+        }
+
+        .proof-name { font-weight: 700; font-size: 14px; }
+        .proof-role { font-size: 12px; color: var(--muted); }
+
+        /* ── CTA ───────────────────────────────────────────────── */
+        .cta { padding: 40px 24px 120px; }
+
+        .cta-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            border-radius: 28px; padding: 80px 48px;
+            text-align: center; color: #fff;
+            position: relative; overflow: hidden;
+        }
+
+        .cta-card::before {
+            content: ''; position: absolute;
+            top: -200px; right: -100px; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(66,133,244,0.15) 0%, transparent 60%);
+            border-radius: 50%;
+        }
+
+        .cta-card::after {
+            content: ''; position: absolute;
+            bottom: -200px; left: -100px; width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 60%);
+            border-radius: 50%;
+        }
+
+        .cta-card > * { position: relative; z-index: 1; }
+
+        .cta-free {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(66,133,244,0.15); border: 1px solid rgba(66,133,244,0.3);
+            border-radius: 100px; padding: 8px 20px;
+            font-size: 14px; font-weight: 700; color: #93c5fd; margin-bottom: 28px;
+        }
+
+        .cta-card h2 {
+            font-size: clamp(30px, 4vw, 46px); font-weight: 800;
+            margin-bottom: 16px; letter-spacing: -0.025em; line-height: 1.15;
+        }
+
+        .cta-card p {
+            font-size: 17px; opacity: 0.7; max-width: 480px;
+            margin: 0 auto 40px; line-height: 1.7;
+        }
+
+        .cta-card .btn-primary {
+            background: #fff; color: var(--text);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+            font-size: 16px; padding: 18px 36px;
+        }
+
+        .cta-card .btn-primary:hover { box-shadow: 0 8px 40px rgba(0,0,0,0.35); }
+
+        .cta-features {
+            display: flex; justify-content: center; gap: 32px;
+            margin-top: 32px; flex-wrap: wrap;
+        }
+
+        .cta-feat {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; color: rgba(255,255,255,0.6); font-weight: 500;
+        }
+
+        .cta-feat svg { color: var(--green); flex-shrink: 0; }
+
+        /* ── Footer ────────────────────────────────────────────── */
+        footer {
+            padding: 40px 24px; text-align: center; border-top: 1px solid var(--border);
+        }
+
+        footer p { font-size: 13px; color: var(--muted); }
+        footer a { color: var(--muted); font-weight: 600; }
+        footer a:hover { color: var(--text); }
+
+        /* ── Responsive ────────────────────────────────────────── */
+        @media (max-width: 900px) {
+            .features-grid, .proof-grid { grid-template-columns: repeat(2, 1fr); }
+            .steps { grid-template-columns: repeat(2, 1fr); }
+            .stats-bar { gap: 32px; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-toggle { display: block; }
+            .nav-links.open {
+                display: flex; flex-direction: column;
+                position: absolute; top: 72px; left: 0; right: 0;
+                background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
+                border-bottom: 1px solid var(--border);
+                padding: 24px; gap: 20px;
+                box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+            }
+            .features-grid, .proof-grid { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; gap: 16px; }
+            .hero { padding: 130px 24px 70px; }
+            .preview-body { padding: 16px; }
+            .cta-card { padding: 56px 24px; }
+            .cta-features { flex-direction: column; align-items: center; gap: 12px; }
+            .stats-bar { gap: 24px; }
+            .stat-num { font-size: 26px; }
+        }
+
+        /* ── Scroll animations ─────────────────────────────────── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .anim { opacity: 0; animation: fadeUp 0.7s cubic-bezier(.4,0,.2,1) forwards; }
+        .anim-d1 { animation-delay: 0.1s; }
+        .anim-d2 { animation-delay: 0.2s; }
+        .anim-d3 { animation-delay: 0.3s; }
+        .anim-d4 { animation-delay: 0.45s; }
+        .anim-d5 { animation-delay: 0.6s; }
+
+        /* Intersection observer driven */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.7s cubic-bezier(.4,0,.2,1); }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────────────────────── -->
+<nav>
+    <div class="container">
+        <div class="nav-brand">
+            <div class="nav-brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            GMB AI Reviews
+        </div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#testimonials">Testimonials</a></li>
+            <li><a href="#get-started" class="nav-cta">Get Started Free</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────────────────── -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-badge anim"><div class="dot"></div> Free WordPress Plugin</div>
+        <h1 class="anim anim-d1">Manage Google Reviews<br>with <span class="gradient">AI-Powered</span> Replies</h1>
+        <p class="anim anim-d2">Connect your Google Business Profile, view reviews, generate professional AI replies, and post them — all from WordPress.</p>
+        <div class="hero-buttons anim anim-d3">
+            <a href="#get-started" class="btn btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Free
+            </a>
+            <a href="#features" class="btn btn-outline">See Features</a>
+        </div>
+
+        <div class="stats-bar anim anim-d4">
+            <div class="stat">
+                <div class="stat-num"><span class="accent">1</span>-Click</div>
+                <div class="stat-label">Google Sign In</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num"><span class="accent">AI</span> Powered</div>
+                <div class="stat-label">Reply Generation</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num"><span class="accent">0</span> Config</div>
+                <div class="stat-label">No API Keys Needed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num"><span class="accent">100%</span></div>
+                <div class="stat-label">Free &amp; Open Source</div>
+            </div>
+        </div>
+
+        <div class="hero-preview-wrap anim anim-d5">
+            <div class="hero-preview">
+                <div class="preview-bar">
+                    <div class="preview-dot preview-dot--r"></div>
+                    <div class="preview-dot preview-dot--y"></div>
+                    <div class="preview-dot preview-dot--g"></div>
+                    <div class="preview-url">yoursite.com/wp-admin &mdash; GMB Reviews Manager</div>
+                </div>
+                <div class="preview-body">
+                    <div class="preview-header">
+                        <div class="preview-header-icon">&#11088;</div>
+                        <div>
+                            <h3>Google Reviews Manager</h3>
+                            <p>Manage and respond to your Google Business reviews with AI</p>
+                        </div>
+                    </div>
+                    <div class="preview-card">
+                        <div class="preview-card-head">
+                            <div class="preview-reviewer">
+                                <div class="preview-avatar">S</div>
+                                <div>
+                                    <div class="preview-name">Sarah Johnson</div>
+                                    <div class="preview-date">Mar 15, 2026</div>
+                                </div>
+                            </div>
+                            <div class="preview-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                        </div>
+                        <div class="preview-text">Absolutely amazing experience! The staff was incredibly friendly and helpful. We will definitely be coming back!</div>
+                        <div class="preview-ai-btn">&#10024; Generate AI Reply</div>
+                        <div class="preview-reply">
+                            <div class="preview-reply-label">AI Generated Reply</div>
+                            Thank you so much, Sarah! We're thrilled to hear you had an amazing experience. Our team works hard to create a warm and welcoming atmosphere. We can't wait to see you again!
+                            <div class="preview-reply-actions">
+                                <div class="preview-post-btn">&#10004; Post to Google</div>
+                                <div class="preview-edit-btn">&#9998; Edit</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="preview-card">
+                        <div class="preview-card-head">
+                            <div class="preview-reviewer">
+                                <div class="preview-avatar" style="background:linear-gradient(135deg,#EA4335,#dc2626);">M</div>
+                                <div>
+                                    <div class="preview-name">Mike Chen</div>
+                                    <div class="preview-date">Mar 12, 2026</div>
+                                </div>
+                            </div>
+                            <div class="preview-stars">&#9733;&#9733;&#9733;<span style="color:#cbd5e1;">&#9734;&#9734;</span></div>
+                        </div>
+                        <div class="preview-text">The wait time was too long but the food itself was decent. Would appreciate faster service next time.</div>
+                        <div class="preview-ai-btn">&#10024; Generate AI Reply</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Features ─────────────────────────────────────────────── -->
+<section class="features" id="features">
+    <div class="container">
+        <div class="features-header reveal">
+            <div class="section-label">&#10024; Features</div>
+            <h2 class="section-title">Everything you need to<br>manage reviews</h2>
+            <p class="section-desc">From connecting your Google account to posting AI-powered replies — all built into your WordPress admin.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon feature-icon--blue">
+                    <svg width="24" height="24" viewBox="0 0 48 48" fill="none"><path d="M43.611 20.083H42V20H24v8h11.303C33.973 32.217 29.418 35 24 35c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#FFC107"/><path d="M6.306 14.691l6.571 4.819C14.655 15.108 19.001 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" fill="#FF3D00"/><path d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.399 0-9.947-3.469-11.292-8.204l-6.52 5.025C9.505 39.556 16.227 44 24 44z" fill="#4CAF50"/><path d="M43.611 20.083H42V20H24v8h11.303c-.633 1.738-1.791 3.22-3.263 4.261l.002-.002 6.19 5.238C37.9 39.601 44 35 44 24c0-1.341-.138-2.65-.389-3.917z" fill="#1976D2"/></svg>
+                </div>
+                <h3>One-Click Google Sign In</h3>
+                <p>Users just click "Sign in with Google" — no API keys, no configuration needed. Everything is built-in.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon feature-icon--green">&#127759;</div>
+                <h3>Auto-Detect Locations</h3>
+                <p>Automatically fetches all your Google Business accounts and locations. Just pick from a dropdown.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon feature-icon--yellow">&#11088;</div>
+                <h3>View All Reviews</h3>
+                <p>Beautiful dashboard showing every review — star ratings, dates, reviewer names, and existing replies.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon feature-icon--purple">&#10024;</div>
+                <h3>AI-Powered Replies</h3>
+                <p>Generate professional, context-aware replies using Google Gemini AI with a single click.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon feature-icon--teal">&#9998;</div>
+                <h3>Edit Before Posting</h3>
+                <p>Review and edit AI replies before posting. Add your personal touch to match your brand voice.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon feature-icon--red">&#128640;</div>
+                <h3>Post Directly to Google</h3>
+                <p>One-click publishing to Google Business Profile. Your reply goes live immediately.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── How it works ─────────────────────────────────────────── -->
+<section class="how-it-works" id="how-it-works">
+    <div class="container">
+        <div class="how-header reveal">
+            <div class="section-label">&#9889; Simple Setup</div>
+            <h2 class="section-title">Up and running in 2 minutes</h2>
+            <p class="section-desc">No technical setup required. Just install, connect, and start managing reviews.</p>
+        </div>
+        <div class="steps">
+            <div class="step reveal">
+                <div class="step-num">1</div>
+                <h3>Install Plugin</h3>
+                <p>Upload to WordPress and activate. One click, done.</p>
+            </div>
+            <div class="step reveal">
+                <div class="step-num">2</div>
+                <h3>Sign in with Google</h3>
+                <p>Click the Google button and authorize your Business Profile.</p>
+            </div>
+            <div class="step reveal">
+                <div class="step-num">3</div>
+                <h3>Select Location</h3>
+                <p>Pick your business from the auto-populated dropdown.</p>
+            </div>
+            <div class="step reveal">
+                <div class="step-num">4</div>
+                <h3>Manage Reviews</h3>
+                <p>Generate AI replies, edit, and post to Google directly.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Testimonials ─────────────────────────────────────────── -->
+<section class="social-proof" id="testimonials">
+    <div class="container">
+        <div class="social-proof-header reveal">
+            <div class="section-label">&#128172; Testimonials</div>
+            <h2 class="section-title">Loved by business owners</h2>
+            <p class="section-desc">See what people are saying about managing their Google reviews with AI.</p>
+        </div>
+        <div class="proof-grid">
+            <div class="proof-card reveal">
+                <div class="proof-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <div class="proof-text">"This plugin saved me hours every week. I used to dread responding to reviews, now AI does it in seconds and the replies sound better than what I wrote myself!"</div>
+                <div class="proof-author">
+                    <div class="proof-avatar" style="background:linear-gradient(135deg,#4285F4,#6366f1);">J</div>
+                    <div><div class="proof-name">Jessica Rivera</div><div class="proof-role">Restaurant Owner</div></div>
+                </div>
+            </div>
+            <div class="proof-card reveal">
+                <div class="proof-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <div class="proof-text">"The setup was incredibly easy — literally just signed in with Google and it found my business automatically. The AI replies are professional and on-brand."</div>
+                <div class="proof-author">
+                    <div class="proof-avatar" style="background:linear-gradient(135deg,#34A853,#16a34a);">T</div>
+                    <div><div class="proof-name">Tom Bradley</div><div class="proof-role">Dental Clinic Manager</div></div>
+                </div>
+            </div>
+            <div class="proof-card reveal">
+                <div class="proof-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <div class="proof-text">"Being able to edit the AI reply before posting is a game changer. I can add specific details and it still sounds natural. Best free plugin I've found."</div>
+                <div class="proof-author">
+                    <div class="proof-avatar" style="background:linear-gradient(135deg,#EA4335,#dc2626);">A</div>
+                    <div><div class="proof-name">Aisha Patel</div><div class="proof-role">Hotel Operations</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── CTA ──────────────────────────────────────────────────── -->
+<section class="cta" id="get-started">
+    <div class="container">
+        <div class="cta-card reveal">
+            <div class="cta-free">&#10024; Forever Free</div>
+            <h2>Start managing your<br>reviews today</h2>
+            <p>Download the plugin, connect your Google account, and let AI handle your review replies.</p>
+            <a href="#" class="btn btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Plugin
+            </a>
+            <div class="cta-features">
+                <div class="cta-feat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34A853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    No API keys required
+                </div>
+                <div class="cta-feat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34A853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Works with any WordPress site
+                </div>
+                <div class="cta-feat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34A853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    AI replies in seconds
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Footer ──────────────────────────────────────────────── -->
+<footer>
+    <div class="container">
+        <p>GMB AI Review Manager &mdash; Free WordPress plugin for managing Google Business reviews with AI.</p>
+    </div>
+</footer>
+
+<script>
+    // Mobile nav
+    document.getElementById('navToggle').addEventListener('click', function() {
+        document.getElementById('navLinks').classList.toggle('open');
+    });
+    document.querySelectorAll('.nav-links a').forEach(function(link) {
+        link.addEventListener('click', function() {
+            document.getElementById('navLinks').classList.remove('open');
+        });
+    });
+
+    // Scroll reveal
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(function(el) {
+        observer.observe(el);
+    });
+</script>
+
+</body>
+</html>
